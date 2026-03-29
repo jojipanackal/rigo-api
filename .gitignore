@@ -1,0 +1,30 @@
+# Binary
+rugo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Docker volumes (if stored locally)
+postgres_data/
+redis_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Local files
+sample_typescript.csv
