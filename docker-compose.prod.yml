@@ -1,4 +1,17 @@
 services:
+  # Nginx Proxy Manager
+  proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: rigo-proxy
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - proxy_data:/data
+      - proxy_letsencrypt:/etc/letsencrypt
+
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
@@ -46,8 +59,10 @@ services:
       DB_ADDR: postgres://${DB_USER:-rigo_admin}:${DB_PASSWORD:-password}@postgres:5432/rigo_db?sslmode=disable
       REDIS_ADDR: redis:6379
     ports:
-      - "8080:8080"
+      - "8080:8080" # Keep exposed for now, can be internal later
 
 volumes:
+  proxy_data:
+  proxy_letsencrypt:
   postgres_data:
   redis_data:
