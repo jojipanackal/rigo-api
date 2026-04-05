@@ -1,16 +1,53 @@
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: rugo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rugo_db
+      POSTGRES_USER: rugo_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/database.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rugo_admin -d rugo_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: rugo-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Rugo API service
   api:
     image: registry.digitalocean.com/${DOCR_NAME}/rugo-api:latest
     container_name: rugo-api
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - .env
     environment:
-      # These will override the defaults in .env
-      DB_ADDR: ${DB_ADDR}
-      REDIS_ADDR: ${REDIS_ADDR}
-      ACCESS_SECRET: ${ACCESS_SECRET}
-      REFRESH_SECRET: ${REFRESH_SECRET}
+      DB_ADDR: postgres://${DB_USER:-rugo_admin}:${DB_PASSWORD:-password}@postgres:5432/rugo_db?sslmode=disable
+      REDIS_ADDR: redis:6379
     ports:
       - "8080:8080"
+
+volumes:
+  postgres_data:
+  redis_data:
