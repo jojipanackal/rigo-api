@@ -10,7 +10,7 @@ Deployment of the Go backend to a DigitalOcean droplet. Since you already have a
 
 ## 2. CI/CD Workflow (GitHub Actions)
 The file `.github/workflows/deploy.yml` automates the release process:
-1. **Build & Push**: Builds the image and pushes it to `registry.digitalocean.com/<your-registry>/rugo-api:latest`.
+1. **Build & Push**: Builds the image and pushes it to `registry.digitalocean.com/<your-registry>/api:latest`.
 2. **Deploy**: SSH into the droplet, logs in to DOCR, pulls the new image, and restarts the backend.
 
 ## 3. Configuration Changes
@@ -34,8 +34,8 @@ In your repository settings, add the following secrets:
 ### B. Server Side Setup (Once)
 On your droplet:
 1. Install Docker: `sudo apt update && sudo apt install docker.io docker-compose -y`
-2. Create directory: `mkdir -p ~/rugo-api`
-3. Upload `docker-compose.prod.yml` to `~/rugo-api/docker-compose.prod.yml`. Or let the GitHub action handle it.
+2. Create directory: `mkdir -p ~/rigo-api`
+3. Upload `docker-compose.prod.yml` to `~/rigo-api/docker-compose.prod.yml`. Or let the GitHub action handle it.
 
 ---
 

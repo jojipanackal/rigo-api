@@ -1,5 +1,5 @@
--- Rugo Database Schema v2
--- Run: psql -U rugo_admin -d rugo_db -f database_v2.sql
+-- Rigo Database Schema v2
+-- Run: psql -U rigo_admin -d rigo_db -f database_v2.sql
 
 -- ============================================================
 -- DROP EXISTING TABLES (reverse order due to foreign keys)
@@ -217,7 +217,7 @@ CREATE INDEX idx_user_stats_xp              ON user_stats(xp DESC);
 
 -- Demo user (password: "password")
 INSERT INTO users (name, email, password_hash)
-VALUES ('Demo User', 'demo@rugo.app', '$2a$10$983GgvWTUMAFK4rQ88e6.eNGJiv3hV/25YNPCk3G5YAumZI3Kgpxm');
+VALUES ('Demo User', 'demo@rigo.app', '$2a$10$983GgvWTUMAFK4rQ88e6.eNGJiv3hV/25YNPCk3G5YAumZI3Kgpxm');
 
 -- Seed stats row for demo user
 INSERT INTO user_stats (user_id) VALUES (1);
