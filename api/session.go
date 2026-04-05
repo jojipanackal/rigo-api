@@ -27,13 +27,12 @@ func (h *SessionHandler) Start(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deck, err := h.DeckModel.GetById(deckId)
+	userId := middlewares.GetUserID(r.Context())
+	deck, err := h.DeckModel.GetById(deckId, userId)
 	if err != nil {
 		WriteError(w, http.StatusNotFound, "deck not found")
 		return
 	}
-
-	userId := middlewares.GetUserID(r.Context())
 
 	cards, err := h.CardModel.GetByDeckId(deckId)
 	if err != nil {

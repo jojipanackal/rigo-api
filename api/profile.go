@@ -44,7 +44,6 @@ func (h *ProfileHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If the requester is logged in, include subscription status
-	currentUser := middlewares.GetUserID(r.Context())
 	if currentUser > 0 && currentUser != userId {
 		resp["is_subscribed"] = h.SubscriptionModel.IsSubscribed(currentUser, userId)
 	}

@@ -37,14 +37,12 @@ func (h *CardHandler) Create(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusBadRequest, "invalid deck id")
 		return
 	}
-
-	deck, err := h.DeckModel.GetById(deckId)
+	userId := middlewares.GetUserID(r.Context())
+	deck, err := h.DeckModel.GetById(deckId, userId)
 	if err != nil {
 		WriteError(w, http.StatusNotFound, "deck not found")
 		return
 	}
-
-	userId := middlewares.GetUserID(r.Context())
 	if userId != deck.AuthorId {
 		WriteError(w, http.StatusForbidden, "not the deck owner")
 		return
@@ -85,14 +83,13 @@ func (h *CardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, "card not found")
 		return
 	}
-
-	deck, err := h.DeckModel.GetById(card.DeckId)
+	userId := middlewares.GetUserID(r.Context())
+	deck, err := h.DeckModel.GetById(card.DeckId, userId)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "could not verify ownership")
 		return
 	}
 
-	userId := middlewares.GetUserID(r.Context())
 	if userId != deck.AuthorId {
 		WriteError(w, http.StatusForbidden, "not the deck owner")
 		return
@@ -135,14 +132,13 @@ func (h *CardHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, "card not found")
 		return
 	}
-
-	deck, err := h.DeckModel.GetById(card.DeckId)
+	userId := middlewares.GetUserID(r.Context())
+	deck, err := h.DeckModel.GetById(card.DeckId, userId)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "could not verify ownership")
 		return
 	}
 
-	userId := middlewares.GetUserID(r.Context())
 	if userId != deck.AuthorId {
 		WriteError(w, http.StatusForbidden, "not the deck owner")
 		return
@@ -162,14 +158,13 @@ func (h *CardHandler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusBadRequest, "invalid deck id")
 		return
 	}
-
-	deck, err := h.DeckModel.GetById(deckId)
+	userId := middlewares.GetUserID(r.Context())
+	deck, err := h.DeckModel.GetById(deckId, userId)
 	if err != nil {
 		WriteError(w, http.StatusNotFound, "deck not found")
 		return
 	}
 
-	userId := middlewares.GetUserID(r.Context())
 	if userId != deck.AuthorId {
 		WriteError(w, http.StatusForbidden, "not the deck owner")
 		return

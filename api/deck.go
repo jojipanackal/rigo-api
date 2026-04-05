@@ -98,9 +98,7 @@ func (h *DeckHandler) Get(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, "deck not found")
 		return
 	}
-
 	// Increment visit count for non-owner public decks
-	userId := currentUserID(r, h.AuthModel)
 	isOwner := userId > 0 && userId == deck.AuthorId
 	if !isOwner && deck.IsPublic {
 		h.DeckModel.IncrementVisitCount(id)
@@ -166,7 +164,7 @@ func (h *DeckHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deck, _ := h.DeckModel.GetById(deckId)
+	deck, _ := h.DeckModel.GetById(deckId, userId)
 	WriteJSON(w, http.StatusCreated, deck)
 }
 
@@ -178,13 +176,13 @@ func (h *DeckHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deck, err := h.DeckModel.GetById(id)
+	userId := middlewares.GetUserID(r.Context())
+	deck, err := h.DeckModel.GetById(id, userId)
 	if err != nil {
 		WriteError(w, http.StatusNotFound, "deck not found")
 		return
 	}
 
-	userId := middlewares.GetUserID(r.Context())
 	if userId != deck.AuthorId {
 		WriteError(w, http.StatusForbidden, "not the deck owner")
 		return
@@ -225,7 +223,7 @@ func (h *DeckHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, _ := h.DeckModel.GetById(id)
+	updated, _ := h.DeckModel.GetById(id, userId)
 	WriteJSON(w, http.StatusOK, updated)
 }
 
@@ -236,14 +234,13 @@ func (h *DeckHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusBadRequest, "invalid deck id")
 		return
 	}
-
-	deck, err := h.DeckModel.GetById(id)
+	userId := middlewares.GetUserID(r.Context())
+	deck, err := h.DeckModel.GetById(id, userId)
 	if err != nil {
 		WriteError(w, http.StatusNotFound, "deck not found")
 		return
 	}
 
-	userId := middlewares.GetUserID(r.Context())
 	if userId != deck.AuthorId {
 		WriteError(w, http.StatusForbidden, "not the deck owner")
 		return
@@ -310,7 +307,7 @@ func (h *DeckHandler) Rate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deck, _ := h.DeckModel.GetById(id)
+	deck, _ := h.DeckModel.GetById(id, userId)
 	WriteJSON(w, http.StatusOK, map[string]any{
 		"rating":     body.Rating,
 		"avg_rating": deck.Rating,
