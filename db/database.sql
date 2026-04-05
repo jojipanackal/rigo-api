@@ -227,7 +227,7 @@ INSERT INTO decks (name, description, author_id, cards_count, rating, is_public)
 VALUES (
     'Golang Basics',
     'Master the fundamentals of Go, including concurrency, interfaces, and the standard library.',
-    1, 5, 4.5, true
+    1, 5, 4.5, false
 );
 
 -- Sample cards

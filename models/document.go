@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/jojipanackal/rugo/db"
+	"github.com/jojipanackal/rigo-api/db"
 )
 
 type Document struct {

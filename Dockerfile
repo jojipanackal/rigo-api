@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o rugo .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o rigo .
 
 # Runtime stage
 FROM alpine:latest
@@ -25,11 +25,11 @@ WORKDIR /app
 RUN apk --no-cache add ca-certificates
 
 # Copy API binary from builder
-COPY --from=builder /app/rugo .
+COPY --from=builder /app/rigo .
 
 # Expose port
 EXPOSE 8080
 
 # Run the application
-CMD ["./rugo"]
+CMD ["./rigo"]
  

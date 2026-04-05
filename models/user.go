@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/jojipanackal/rugo/db"
+	"github.com/jojipanackal/rigo-api/db"
 	"golang.org/x/crypto/bcrypt"
 )
 

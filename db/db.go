@@ -17,7 +17,7 @@ var Redis *redis.Client
 func InitDB() {
 	addr := os.Getenv("DB_ADDR")
 	if addr == "" {
-		addr = "postgres://rugo_admin:password@localhost:5432/rugo_db?sslmode=disable"
+		addr = "postgres://rigo_admin:password@localhost:5432/rigo_db?sslmode=disable"
 	}
 
 	var err error

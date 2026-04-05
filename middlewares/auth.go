@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jojipanackal/rugo/models"
+	"github.com/jojipanackal/rigo-api/models"
 )
 
 type contextKey string

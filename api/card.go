@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/jojipanackal/rugo/middlewares"
-	"github.com/jojipanackal/rugo/models"
+	"github.com/jojipanackal/rigo-api/middlewares"
+	"github.com/jojipanackal/rigo-api/models"
 )
 
 type CardHandler struct {

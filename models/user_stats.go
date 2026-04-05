@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/jojipanackal/rugo/db"
+	"github.com/jojipanackal/rigo-api/db"
 )
 
 // UserStats holds cached aggregate stats for a user.

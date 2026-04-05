@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	"github.com/jojipanackal/rugo/db"
+	"github.com/jojipanackal/rigo-api/db"
 )
 
 var ctx = context.Background()

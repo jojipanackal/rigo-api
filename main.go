@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jojipanackal/rugo/api"
-	"github.com/jojipanackal/rugo/db"
-	"github.com/jojipanackal/rugo/middlewares"
-	"github.com/jojipanackal/rugo/models"
+	"github.com/jojipanackal/rigo-api/api"
+	"github.com/jojipanackal/rigo-api/db"
+	"github.com/jojipanackal/rigo-api/middlewares"
+	"github.com/jojipanackal/rigo-api/models"
 )
 
 func main() {
@@ -79,6 +79,13 @@ func main() {
 		return middlewares.AuthMiddleware(authModel)(h)
 	}
 
+	// Health Check
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"up","timestamp":"` + time.Now().Format(time.RFC3339) + `"}`))
+	})
+
 	// Auth
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/auth/signup", authHandler.Signup)
@@ -123,7 +130,7 @@ func main() {
 	mux.Handle("PUT /api/documents/{docType}/{refId}", protected(documentHandler.Upload))
 	mux.Handle("DELETE /api/documents/{docType}/{refId}", protected(documentHandler.Delete))
 
-	log.Println("🚀 Rugo API running at http://localhost:8080")
+	log.Println("🚀 Rigo API running at :8080")
 	log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(mux)))
 }
 

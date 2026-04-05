@@ -1,4 +1,4 @@
-module github.com/jojipanackal/rugo
+module github.com/jojipanackal/rigo-api
 
 go 1.24.0
 
