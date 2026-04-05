@@ -31,7 +31,7 @@ func (h *DeckHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	offset := (page - 1) * limit
 
-	userId := currentUserID(r, h.AuthModel)
+	userId := GetCurrentUserID(r, h.AuthModel)
 	decks, err := h.DeckModel.GetAll(limit, offset, userId)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "could not fetch decks")
@@ -52,7 +52,8 @@ func (h *DeckHandler) Popular(w http.ResponseWriter, r *http.Request) {
 	}
 	offset := (page - 1) * limit
 
-	decks, err := h.DeckModel.GetPopular(limit, offset)
+	userId := GetCurrentUserID(r, h.AuthModel)
+	decks, err := h.DeckModel.GetPopular(limit, offset, userId)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "could not fetch decks")
 		return
@@ -74,7 +75,8 @@ func (h *DeckHandler) Search(w http.ResponseWriter, r *http.Request) {
 	if limit < 1 || limit > 100 {
 		limit = 20
 	}
-	decks, err := h.DeckModel.Search(q, limit)
+	userId := GetCurrentUserID(r, h.AuthModel)
+	decks, err := h.DeckModel.Search(q, limit, userId)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "search failed")
 		return
@@ -90,7 +92,8 @@ func (h *DeckHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deck, err := h.DeckModel.GetById(id)
+	userId := GetCurrentUserID(r, h.AuthModel)
+	deck, err := h.DeckModel.GetById(id, userId)
 	if err != nil {
 		WriteError(w, http.StatusNotFound, "deck not found")
 		return
@@ -253,6 +256,17 @@ func (h *DeckHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, map[string]string{"message": "deck deleted"})
 }
 
+// GET /api/decks/bookmarks
+func (h *DeckHandler) ListBookmarks(w http.ResponseWriter, r *http.Request) {
+	userId := middlewares.GetUserID(r.Context())
+	decks, err := h.DeckModel.GetBookmarkedDecks(userId)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "could not fetch bookmarks")
+		return
+	}
+	WriteJSON(w, http.StatusOK, map[string]any{"decks": decks})
+}
+
 // POST /api/decks/{id}/bookmark
 func (h *DeckHandler) Bookmark(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
@@ -305,7 +319,7 @@ func (h *DeckHandler) Rate(w http.ResponseWriter, r *http.Request) {
 
 // currentUserID attempts to extract the logged-in user ID without requiring middleware.
 // Used on public endpoints that optionally enrich the response for logged-in users.
-func currentUserID(r *http.Request, authModel *models.AuthModel) int64 {
+func GetCurrentUserID(r *http.Request, authModel *models.AuthModel) int64 {
 	if uid := middlewares.GetUserID(r.Context()); uid != 0 {
 		return uid
 	}

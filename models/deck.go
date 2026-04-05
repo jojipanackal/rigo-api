@@ -16,9 +16,10 @@ type Deck struct {
 	Rating         float64        `db:"rating"      json:"rating"`
 	VisitCount     int64          `db:"visit_count" json:"visit_count"`
 	DeckType       string         `db:"deck_type"   json:"deck_type"`
-	Tags           pq.StringArray `db:"tags"   json:"tags"`
+	Tags           pq.StringArray `db:"tags"        json:"tags"`
 	HeaderImageURL string         `db:"header_image_url" json:"header_image_url"`
 	IsPublic       bool           `db:"is_public"   json:"is_public"`
+	HasActiveSession bool           `db:"has_active_session" json:"has_active_session"`
 	CreatedAt      time.Time      `db:"created_at"  json:"created_at"`
 	UpdatedAt      time.Time      `db:"updated_at"  json:"updated_at"`
 }
@@ -45,9 +46,15 @@ func (m *DeckModel) Create(name, description string, authorId int64, isPublic bo
 	return lastInsertId, nil
 }
 
-func (m *DeckModel) GetById(id int64) (Deck, error) {
+func (m *DeckModel) GetById(id int64, userId int64) (Deck, error) {
 	var d Deck
-	err := db.Instance.Get(&d, "SELECT * FROM decks WHERE id = $1", id)
+	query := `SELECT id, name, COALESCE(description, '') as description, COALESCE(author_id, 0) as author_id, 
+		cards_count, COALESCE(rating, 0) as rating, visit_count, deck_type, tags, 
+		COALESCE(header_image_url, '') as header_image_url, is_public, 
+		EXISTS (SELECT 1 FROM study_sessions WHERE user_id = $2 AND deck_id = $1 AND completed_at IS NULL) as has_active_session,
+		created_at, updated_at 
+		FROM decks WHERE id = $1`
+	err := db.Instance.Get(&d, query, id, userId)
 	return d, err
 }
 
@@ -79,7 +86,12 @@ func (m *DeckModel) Delete(id int64) error {
 func (m *DeckModel) GetAll(limit, offset int, userId int64) ([]Deck, error) {
 	var decks []Deck
 	query := `
-		SELECT * FROM decks 
+		SELECT id, name, COALESCE(description, '') as description, COALESCE(author_id, 0) as author_id, 
+		cards_count, COALESCE(rating, 0) as rating, visit_count, deck_type, tags, 
+		COALESCE(header_image_url, '') as header_image_url, is_public, 
+		EXISTS (SELECT 1 FROM study_sessions WHERE user_id = $3 AND deck_id = id AND completed_at IS NULL) as has_active_session,
+		created_at, updated_at 
+		FROM decks 
 		WHERE is_public = true 
 		OR (author_id = $3 AND $3 <> 0)
 		ORDER BY created_at DESC 
@@ -89,27 +101,37 @@ func (m *DeckModel) GetAll(limit, offset int, userId int64) ([]Deck, error) {
 }
 
 // GetByAuthor returns all decks by a specific user (all if owner, public otherwise)
-func (m *DeckModel) GetByAuthor(authorId int64, includePrivate bool) ([]Deck, error) {
+func (m *DeckModel) GetByAuthor(authorId int64, viewerId int64, includePrivate bool) ([]Deck, error) {
 	var decks []Deck
 	var query string
+	columns := `id, name, COALESCE(description, '') as description, COALESCE(author_id, 0) as author_id, 
+		cards_count, COALESCE(rating, 0) as rating, visit_count, deck_type, tags, 
+		COALESCE(header_image_url, '') as header_image_url, is_public, 
+		EXISTS (SELECT 1 FROM study_sessions WHERE user_id = $2 AND deck_id = id AND completed_at IS NULL) as has_active_session,
+		created_at, updated_at`
 	if includePrivate {
-		query = `SELECT * FROM decks WHERE author_id = $1 ORDER BY created_at DESC`
+		query = "SELECT " + columns + " FROM decks WHERE author_id = $1 ORDER BY created_at DESC"
 	} else {
-		query = `SELECT * FROM decks WHERE author_id = $1 AND is_public = true ORDER BY created_at DESC`
+		query = "SELECT " + columns + " FROM decks WHERE author_id = $1 AND is_public = true ORDER BY created_at DESC"
 	}
-	err := db.Instance.Select(&decks, query, authorId)
+	err := db.Instance.Select(&decks, query, authorId, viewerId)
 	return decks, err
 }
 
 // GetPopular returns decks ordered by visit count
-func (m *DeckModel) GetPopular(limit, offset int) ([]Deck, error) {
+func (m *DeckModel) GetPopular(limit, offset int, userId int64) ([]Deck, error) {
 	var decks []Deck
 	query := `
-		SELECT * FROM decks 
+		SELECT id, name, COALESCE(description, '') as description, COALESCE(author_id, 0) as author_id, 
+		cards_count, COALESCE(rating, 0) as rating, visit_count, deck_type, tags, 
+		COALESCE(header_image_url, '') as header_image_url, is_public, 
+		EXISTS (SELECT 1 FROM study_sessions WHERE user_id = $3 AND deck_id = id AND completed_at IS NULL) as has_active_session,
+		created_at, updated_at 
+		FROM decks 
 		WHERE is_public = true 
 		ORDER BY visit_count DESC, rating DESC 
 		LIMIT $1 OFFSET $2`
-	err := db.Instance.Select(&decks, query, limit, offset)
+	err := db.Instance.Select(&decks, query, limit, offset, userId)
 	return decks, err
 }
 
@@ -121,15 +143,20 @@ func (m *DeckModel) GetPopularCount() int {
 }
 
 // Search finds decks matching the query
-func (m *DeckModel) Search(query string, limit int) ([]Deck, error) {
+func (m *DeckModel) Search(query string, limit int, userId int64) ([]Deck, error) {
 	var decks []Deck
 	searchQuery := `
-		SELECT * FROM decks 
+		SELECT id, name, COALESCE(description, '') as description, COALESCE(author_id, 0) as author_id, 
+		cards_count, COALESCE(rating, 0) as rating, visit_count, deck_type, tags, 
+		COALESCE(header_image_url, '') as header_image_url, is_public, 
+		EXISTS (SELECT 1 FROM study_sessions WHERE user_id = $3 AND deck_id = id AND completed_at IS NULL) as has_active_session,
+		created_at, updated_at 
+		FROM decks 
 		WHERE is_public = true 
 		AND (name ILIKE $1 OR description ILIKE $1)
 		ORDER BY rating DESC 
 		LIMIT $2`
-	err := db.Instance.Select(&decks, searchQuery, "%"+query+"%", limit)
+	err := db.Instance.Select(&decks, searchQuery, "%"+query+"%", limit, userId)
 	return decks, err
 }
 
@@ -192,11 +219,30 @@ func (m *DeckModel) IncrementVisitCount(deckId int64) error {
 func (m *DeckModel) GetDecksBeingStudied(userId int64) ([]Deck, error) {
 	var decks []Deck
 	query := `
-		SELECT DISTINCT d.* FROM decks d
+		SELECT DISTINCT d.id, d.name, COALESCE(d.description, '') as description, COALESCE(d.author_id, 0) as author_id, 
+		d.cards_count, COALESCE(d.rating, 0) as rating, d.visit_count, d.deck_type, d.tags, 
+		COALESCE(d.header_image_url, '') as header_image_url, d.is_public, 
+		EXISTS (SELECT 1 FROM study_sessions WHERE user_id = $1 AND deck_id = d.id AND completed_at IS NULL) as has_active_session,
+		d.created_at, d.updated_at FROM decks d
 		JOIN study_sessions s ON s.deck_id = d.id
 		WHERE s.user_id = $1 
 		AND (d.is_public = true OR d.author_id = $1)
 		ORDER BY (SELECT MAX(started_at) FROM study_sessions WHERE deck_id = d.id AND user_id = $1) DESC`
+	err := db.Instance.Select(&decks, query, userId)
+	return decks, err
+}
+func (m *DeckModel) GetBookmarkedDecks(userId int64) ([]Deck, error) {
+	var decks []Deck
+	query := `
+		SELECT d.id, d.name, COALESCE(d.description, '') as description, COALESCE(d.author_id, 0) as author_id, 
+		d.cards_count, COALESCE(d.rating, 0) as rating, d.visit_count, d.deck_type, d.tags, 
+		COALESCE(d.header_image_url, '') as header_image_url, d.is_public, 
+		EXISTS (SELECT 1 FROM study_sessions WHERE user_id = $1 AND deck_id = d.id AND completed_at IS NULL) as has_active_session,
+		d.created_at, d.updated_at 
+		FROM decks d
+		JOIN bookmarks b ON b.deck_id = d.id
+		WHERE b.user_id = $1
+		ORDER BY b.created_at DESC`
 	err := db.Instance.Select(&decks, query, userId)
 	return decks, err
 }

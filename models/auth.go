@@ -92,9 +92,8 @@ func (m *AuthModel) CreateAuth(userId int64, td *Token) error {
 func (m *AuthModel) ExtractToken(r *http.Request) string {
 	// First check Authorization header
 	bearToken := r.Header.Get("Authorization")
-	strArr := strings.Split(bearToken, " ")
-	if len(strArr) == 2 {
-		return strArr[1]
+	if strings.HasPrefix(strings.ToLower(bearToken), "bearer ") {
+		return strings.TrimSpace(bearToken[7:])
 	}
 
 	// Fallback to cookie

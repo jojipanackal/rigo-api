@@ -60,6 +60,7 @@ func main() {
 	profileHandler := &api.ProfileHandler{
 		UserModel:         userModel,
 		DeckModel:         deckModel,
+		AuthModel:         authModel,
 		SubscriptionModel: subscriptionModel,
 		BookmarkModel:     bookmarkModel,
 		UserStatsModel:    userStatsModel,
@@ -97,6 +98,7 @@ func main() {
 	mux.Handle("PUT /api/decks/{id}", protected(deckHandler.Update))
 	mux.Handle("DELETE /api/decks/{id}", protected(deckHandler.Delete))
 	mux.Handle("POST /api/decks/{id}/bookmark", protected(deckHandler.Bookmark))
+	mux.Handle("GET /api/decks/bookmarks", protected(deckHandler.ListBookmarks))
 	mux.Handle("POST /api/decks/{id}/rate", protected(deckHandler.Rate))
 
 	// Cards — protected
@@ -107,6 +109,7 @@ func main() {
 
 	// Study sessions — protected
 	mux.Handle("POST /api/decks/{id}/study", protected(sessionHandler.Start))
+	mux.Handle("DELETE /api/decks/{id}/study", protected(sessionHandler.Stop))
 	mux.Handle("POST /api/sessions/{id}/answer", protected(sessionHandler.Answer))
 
 	// Users / Profiles

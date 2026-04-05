@@ -12,6 +12,7 @@ import (
 type ProfileHandler struct {
 	UserModel         *models.UserModel
 	DeckModel         *models.DeckModel
+	AuthModel         *models.AuthModel
 	SubscriptionModel *models.SubscriptionModel
 	BookmarkModel     *models.BookmarkModel
 	UserStatsModel    *models.UserStatsModel
@@ -31,7 +32,8 @@ func (h *ProfileHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decks, _ := h.DeckModel.GetByAuthor(userId, false) // public only
+	currentUser := GetCurrentUserID(r, h.AuthModel)
+	decks, _ := h.DeckModel.GetByAuthor(userId, currentUser, false) // public only
 
 	stats, _ := h.UserStatsModel.Get(userId)
 
@@ -61,7 +63,7 @@ func (h *ProfileHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stats, _ := h.UserStatsModel.Get(userId)
-	myDecks, _ := h.DeckModel.GetByAuthor(userId, true) // include private
+	myDecks, _ := h.DeckModel.GetByAuthor(userId, userId, true) // include private; viewer is same as author
 	bookmarks, _ := h.BookmarkModel.GetBookmarkedDecks(userId)
 	inProgress, _ := h.BookmarkModel.GetInProgressDecks(userId)
 

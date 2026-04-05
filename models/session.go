@@ -127,3 +127,10 @@ func (m *SessionModel) GetLastCompletedSession(deckId, userId int64) (*StudySess
 	}
 	return &s, nil
 }
+// DeleteSessions removes all study sessions for a specific user and deck.
+func (m *SessionModel) DeleteSessions(userId, deckId int64) error {
+	_, err := db.Instance.Exec(
+		`DELETE FROM study_sessions WHERE user_id = $1 AND deck_id = $2`,
+		userId, deckId)
+	return err
+}

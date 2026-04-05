@@ -1,0 +1,53 @@
+name: Deploy to DigitalOcean (DOCR)
+
+on:
+  push:
+    branches: [ "main" ]
+  release:
+    types: [created]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t registry.digitalocean.com/${{ secrets.DOCR_NAME }}/rugo-api:latest .
+          docker push registry.digitalocean.com/${{ secrets.DOCR_NAME }}/rugo-api:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            cd ~/rugo-api
+            # Update .env if secrets were provided
+            echo "${{ secrets.ENV_FILE }}" > .env
+            # Ensure doctl is installed on the droplet for login
+            if ! command -v doctl &> /dev/null; then
+              curl -sL https://github.com/digitalocean/doctl/releases/download/v1.101.0/doctl-1.101.0-linux-amd64.tar.gz | tar -xzv
+              sudo mv doctl /usr/local/bin
+            fi
+            # Authenticate doctl with the token
+            doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+            # Login to DOCR on the server
+            doctl registry login --expiry-seconds 600
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans

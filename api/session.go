@@ -134,3 +134,19 @@ func (h *SessionHandler) Answer(w http.ResponseWriter, r *http.Request) {
 
 	WriteJSON(w, http.StatusOK, resp)
 }
+// DELETE /api/decks/{id}/study
+func (h *SessionHandler) Stop(w http.ResponseWriter, r *http.Request) {
+	deckId, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		WriteError(w, http.StatusBadRequest, "invalid deck id")
+		return
+	}
+
+	userId := middlewares.GetUserID(r.Context())
+	if err := h.SessionModel.DeleteSessions(userId, deckId); err != nil {
+		WriteError(w, http.StatusInternalServerError, "could not stop studying")
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{"message": "deck removed from active study list"})
+}

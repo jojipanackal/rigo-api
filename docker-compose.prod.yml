@@ -1,0 +1,16 @@
+services:
+  # Rugo API service
+  api:
+    image: registry.digitalocean.com/${DOCR_NAME}/rugo-api:latest
+    container_name: rugo-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # These will override the defaults in .env
+      DB_ADDR: ${DB_ADDR}
+      REDIS_ADDR: ${REDIS_ADDR}
+      ACCESS_SECRET: ${ACCESS_SECRET}
+      REFRESH_SECRET: ${REFRESH_SECRET}
+    ports:
+      - "8080:8080"
