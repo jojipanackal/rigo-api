@@ -131,7 +131,7 @@ func main() {
 	mux.Handle("DELETE /api/documents/{docType}/{refId}", protected(documentHandler.Delete))
 
 	log.Println("🚀 Rigo API running at :8080")
-	log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(mux)))
+	log.Fatal(http.ListenAndServe(":8080", middlewares.CORSMiddleware(loggingMiddleware(mux))))
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {
